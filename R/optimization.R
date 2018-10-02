@@ -10,11 +10,21 @@
 #' @param delta.mcr Minimal clinically relevant effect size
 #' @param lambda Two-dimensional vector with penalties for CP and ||n_2^'||_1
 #' @param weighted.alternative Should a weighted alternative be used?
-#' @param delta.alt Point alternative effect size
-score <- function(n1, cf, ce, n2, c2, delta.mcr, lambda, weighted.alternative, delta.alt) {
-  ess(n1, cf, ce, n2, weighted.alternative, delta.alt) -
-    lambda[1] * ecp(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt) +
-    lambda[2] * dn2.l1(cf, ce, n2)
+#' @param delta.alt Point alternative effect size if weighted.alternative = F,
+#' prior mean otherwise
+#' @param tau Standard deviation of prior density
+#'
+score <- function(n1, cf, ce, n2, c2, lambda,
+                  weighted.alternative, delta.mcr, delta.alt, tau) {
+  p <- ess(n1, cf, ce, n2, weighted.alternative, delta.alt, tau)
+  if(lambda[1] != 0){
+    p <- p - lambda[1] *
+      ecp(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt, tau)
+  }
+  if(lambda[2] != 0){
+    p <- p  + lambda[2] * dn2.l1(cf, ce, n2)
+  }
+  return(p)
 }
 
 
@@ -31,6 +41,7 @@ score <- function(n1, cf, ce, n2, c2, delta.mcr, lambda, weighted.alternative, d
 #' @param weighted.alternative Should a weighted alternative be used?
 #' @param delta.alt Point alternative effect size if weighted.alternative = F,
 #' prior mean otherwise
+#' @param tau Standard deviation of the prior density
 #' @param n.max Maximal sample size per stage
 #'
 #' Smoothing splines are used to approximate n_2 and c_2 functions.
@@ -42,9 +53,10 @@ score <- function(n1, cf, ce, n2, c2, delta.mcr, lambda, weighted.alternative, d
 opt_design <- function(alpha,
                 beta,
                 lambda,
-                delta.mcr = 0,
                 weighted.alternative = FALSE,
+                delta.mcr = 0,
                 delta.alt = .3,
+                tau = .1,
                 n.max = Inf) {
 
   start <- c(50, 0, 2, seq(50, 10, length.out = N), seq(2, 0, length.out = N))
@@ -52,24 +64,27 @@ opt_design <- function(alpha,
   up <- c(n.max, 4, 4, rep(n.max, N), rep(4, N))
 
   optimum <- nloptr::nloptr(
-    x0 = start,
-    eval_f      = function(x) score(x[1], x[2], x[3],
-                                    x[4 : (N+3)],
-                                    x[(N+4) : length(start)],
-                                    delta.mcr,
-                                    lambda,
-                                    weighted.alternative,
-                                    delta.alt),
+    x0          = start,
+    eval_f      = function(x) {score(x[1], x[2], x[3],
+                                                 x[4 : (N+3)],
+                                                 x[(N+4) : length(start)],
+                                                 lambda,
+                                                 weighted.alternative,
+                                                 delta.mcr,
+                                                 delta.alt,
+                                                 tau)
+                },
     eval_g_ineq = function(x) { return( c(
-      x[2] - x[3] + 0.1,
-      toe(x[2], x[3], x[(N+4) : length(start)]) - alpha,
-      1 - beta - pow(x[1], x[2], x[3],
-                     x[4 : (N+3)],
-                     x[(N+4) : length(start)],
-                     delta.mcr,
-                     weighted.alternative,
-                     delta.alt)
-      ) )
+                  x[2] - x[3] + 0.1,
+                  toe(x[2], x[3], x[(N+4) : length(start)], x[1]) - alpha,
+                  1 - beta - pow(x[1], x[2], x[3],
+                                 x[4 : (N+3)],
+                                 x[(N+4) : length(start)],
+                                 weighted.alternative,
+                                 delta.mcr,
+                                 delta.alt,
+                                 tau)
+    ) )
     },
     lb = low,
     ub = up,

@@ -10,7 +10,7 @@
 #' @param weighted_alternative Should a weighted average be used?
 
 
-ess <- function(n1, cf, ce, n2, weighted.alternative, delta.alt) {
+ess <- function(n1, cf, ce, n2, weighted.alternative, delta.alt, tau) {
   z <- seq(cf, ce, length.out = length(n2)) # Compute nodes
   if(weighted.alternative == FALSE){
     w <- sapply(z, function(z1) f.z(z1, delta.alt, n1)) # Compute density at nodes
@@ -20,7 +20,7 @@ ess <- function(n1, cf, ce, n2, weighted.alternative, delta.alt) {
       w <- sapply(z, function(z1) f.z(z1, delta, n1)) # Compute density at nodes
       int <- w * n2 # Multiply density by n2
       q <- h * (ce - cf) * sum(wei * w * n2) # Compute integral
-      q <- q * pi_0(delta, delta.alt) # Multiply by prior density
+      q <- q * pi.0(delta, delta.alt, tau) # Multiply by prior density
     }),
     -Inf,
     Inf)$value

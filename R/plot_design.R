@@ -133,7 +133,7 @@ plot_design <- function(d) {
       plot.title = element_text(size=12),
       legend.position = "none"
     ) +
-    expand_limits(y=c(floor(min(v51)), ceiling(max(v51)))) +
+    expand_limits(y = c(floor(min(v51)), ceiling(max(v51)))) +
     scale_y_continuous(breaks = seq(0, 1000, 20))
 
 

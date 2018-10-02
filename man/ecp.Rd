@@ -4,7 +4,7 @@
 \alias{ecp}
 \title{Expected conditional power}
 \usage{
-ecp(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt)
+ecp(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt, tau)
 }
 \arguments{
 \item{n1}{first stage sample size}

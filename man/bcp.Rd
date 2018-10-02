@@ -4,7 +4,7 @@
 \alias{bcp}
 \title{Weighted conditional power over all clinically relevant deltas}
 \usage{
-bcp(z1, c2, n2, cf, ce, delta.mcr)
+bcp(z1, c2, n2, cf, ce, delta.mcr, delta.alt, tau)
 }
 \arguments{
 \item{z1}{the observed value of the first stage test statistic}

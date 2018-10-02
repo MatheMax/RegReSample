@@ -4,7 +4,7 @@
 \alias{ess}
 \title{Expected sample size}
 \usage{
-ess(n1, cf, ce, n2, weighted.alternative, delta.alt)
+ess(n1, cf, ce, n2, weighted.alternative, delta.alt, tau)
 }
 \arguments{
 \item{n1}{First stage sample size}

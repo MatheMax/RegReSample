@@ -31,12 +31,13 @@ cp <- function(z1, c2, n2, cf, ce, delta) {
 #' @param ce stopping for efficacy boundary
 #' @param delta.mcr minimal clinically relevant effect
 #'
-bcp <- function(z1, c2, n2, cf, ce, delta.mcr) {
+bcp <- function(z1, c2, n2, cf, ce, delta.mcr, delta.alt, tau) {
   z <- seq(cf, ce, length.out = length(n2))
   c <- splinefun(z, c2)
   n <- splinefun(z, n2)
   p <- integrate(Vectorize(function(delta) {
-              F(c(z1), delta, n(z1)) * pi_1(delta, delta.alt)
+              F(c(z1), delta, n(z1)) * pi.1(delta, delta.alt, tau, z1, n1)
+    #evtl kann man hier laufzeit gewinnen
             },
             delta.mcr,
             1))
@@ -58,7 +59,7 @@ bcp <- function(z1, c2, n2, cf, ce, delta.mcr) {
 #' @param delta.mcr minimal clinically relevant effect size
 #' @param weighted_alternative Should a weighted alternative be used?
 #'
-ecp <- function(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt){
+ecp <- function(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt, tau){
   z <- seq(cf, ce, length.out = length(n2)) # Compute nodes
   if(weighted.alternative == FALSE){
     w <- sapply(z, function(z1) f.z(z1, delta.alt, n1)) # Compute density at nodes
@@ -70,12 +71,11 @@ ecp <- function(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt){
   } else {
     p <- integrate(Vectorize(function(delta){
       w <- sapply(z, function(z1) f.z(z1, delta, n1)) # Compute density at nodes
-      cond.pow <- function(x) { # x = c(n2, c2)
-        F.z(x[2], delta, x[1])
+      cond.pow <- function(x) { # x = c(n2, c2, z1)
+        F.z(x[2], delta, x[1]) * pi.1(delta, delta.alt, tau, x[3], n1)
       }
-      copo <- apply(cbind(n2, c2), 1, cond.pow)
-      int <- h * (ce - cf) * sum(wei * w * copo)
-      q <- int * pi_1(delta, delta.alt)
+      copo <- apply(cbind(n2, c2, z), 1, cond.pow)
+      q <- h * (ce - cf) * sum(wei * w * copo)
       return(q)
       }),
       delta.mcr,

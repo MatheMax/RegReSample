@@ -4,7 +4,7 @@
 \alias{toe}
 \title{Type one error rate}
 \usage{
-toe(cf, ce, c2)
+toe(cf, ce, c2, n1)
 }
 \arguments{
 \item{cf}{stopping for futility boundary}

@@ -1,9 +1,9 @@
-fixed_design <- function(alpha, beta, delta.mcr){
+fixed_design <- function(alpha, beta, delta.mcr, delta.alt, tau){
   c <- qnorm(1 - alpha) # Ensure type one error rate
 
   pow <- function(n){
     integrate(function(delta){
-      pi_0(delta) * pnorm(sqrt(n) * delta - c)
+      pi_0(delta, delta.alt, tau) * pnorm(sqrt(n) * delta - c)
     },
     delta.mcr,
     Inf)$value

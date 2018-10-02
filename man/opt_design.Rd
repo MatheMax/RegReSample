@@ -4,8 +4,8 @@
 \alias{opt_design}
 \title{Compute an optimal design}
 \usage{
-opt_design(alpha, beta, lambda, delta.mcr = 0,
-  weighted.alternative = F, delta.alt = 0.3, n.max = Inf)
+opt_design(alpha, beta, lambda, weighted.alternative = FALSE,
+  delta.mcr = 0, delta.alt = 0.3, tau = 0.1, n.max = Inf)
 }
 \arguments{
 \item{alpha}{Maximal type one error rate}
@@ -14,19 +14,20 @@ opt_design(alpha, beta, lambda, delta.mcr = 0,
 
 \item{lambda}{Two-dimensional vector with penalties for CP and ||n_2^'||_1}
 
-\item{delta.mcr}{Minimal clinically relevant effect size}
-
 \item{weighted.alternative}{Should a weighted alternative be used?}
 
-\item{delta.alt}{Point alternative effect size}
+\item{delta.mcr}{Minimal clinically relevant effect size}
+
+\item{delta.alt}{Point alternative effect size if weighted.alternative = F,
+prior mean otherwise}
+
+\item{tau}{Standard deviation of the prior density}
 
 \item{n.max}{Maximal sample size per stage
 
 Smoothing splines are used to approximate n_2 and c_2 functions.
 All integrals are approximates by Boole's Newton-Cotes formula
-or by the \code{R}-routine \code{integrate}.
-
- @export}
+or by the \code{R}-routine \code{integrate}.}
 }
 \description{
 \code{opt_design} returns a design that is optimal for

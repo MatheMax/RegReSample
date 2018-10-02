@@ -4,8 +4,8 @@
 \alias{score}
 \title{Compute the score}
 \usage{
-score(n1, cf, ce, n2, c2, delta.mcr, lambda, weighted.alternative,
-  delta.alt)
+score(n1, cf, ce, n2, c2, lambda, weighted.alternative, delta.mcr,
+  delta.alt, tau)
 }
 \arguments{
 \item{n1}{First-stage sample size}
@@ -18,13 +18,16 @@ score(n1, cf, ce, n2, c2, delta.mcr, lambda, weighted.alternative,
 
 \item{c2}{Vector with c2-values}
 
-\item{delta.mcr}{Minimal clinically relevant effect size}
-
 \item{lambda}{Two-dimensional vector with penalties for CP and ||n_2^'||_1}
 
 \item{weighted.alternative}{Should a weighted alternative be used?}
 
-\item{delta.alt}{Point alternative effect size}
+\item{delta.mcr}{Minimal clinically relevant effect size}
+
+\item{delta.alt}{Point alternative effect size if weighted.alternative = F,
+prior mean otherwise}
+
+\item{tau}{Standard deviation of prior density}
 }
 \description{
 score returns the weighted score
