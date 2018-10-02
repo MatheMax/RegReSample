@@ -1,0 +1,23 @@
+Package: RegReSample
+Type: Package
+Title: Compute regularized optimal two-stage designs
+Version: 0.1.0
+Author: Maximilian Pilz
+Maintainer: Maximilian Pilz <pilz@imbi.uni-heidelberg.de>
+Description: RegReSample provides the computation of optimal two-stage designs for normally distributed outcome. 
+    The optimality criterion can be defined by the user as a weighted average of different key figures of the design.
+    The package supports a Bayesian as well as a frequentist power definition and is therefore flexible to operate with conditional as well as predictive power.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports:
+  nloptr
+Suggests: 
+  testthat,
+  ggplot2,
+  devtools,
+  dplyr,
+  roxygen2,
+  grid,
+  gridExtra
+RoxygenNote: 6.1.0
