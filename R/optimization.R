@@ -24,6 +24,11 @@ score <- function(n1, cf, ce, n2, c2, lambda,
   if(lambda[2] != 0){
     p <- p  + lambda[2] * dn2.l1(cf, ce, n2)
   }
+  if(lambda[3] != 0){
+    p <- p  + lambda[3] * dcp.l1(c2, n2, cf, ce, weighted.alternative,
+                                 delta.mcr, delta.alt, tau)
+  }
+
   return(p)
 }
 
@@ -83,7 +88,14 @@ opt_design <- function(alpha,
                                  weighted.alternative,
                                  delta.mcr,
                                  delta.alt,
-                                 tau)
+                                 tau),
+                  rep(1 - beta, N) - cond.pow.rest(x[1], x[2], x[3],
+                                                   x[4 : (N+3)],
+                                                   x[(N+4) : length(start)],
+                                                   delta.mcr,
+                                                   weighted.alternative,
+                                                   delta.alt,
+                                                   tau)
     ) )
     },
     lb = low,
@@ -99,8 +111,8 @@ opt_design <- function(alpha,
   n1 <- optimum$solution[1]
   cf <- optimum$solution[2]
   ce <- optimum$solution[3]
-  n2 <- optimum$solution[4:(N+3)]
-  c2 <- optimum$solution[(N+4):length(start)]
+  n2 <- optimum$solution[4 : (N + 3)]
+  c2 <- optimum$solution[(N + 4) : length(start)]
   x <- seq(cf, ce, length.out = N)
 
 

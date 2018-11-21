@@ -55,3 +55,30 @@ pow <- function(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr, delta.alt, 
   }
   return(pow)
 }
+
+
+#' Conditional Power restriction
+
+cond.pow.rest <- function(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt, tau){
+  z <- seq(cf, ce, length.out = length(n2)) # Compute nodes
+  if(weighted.alternative == FALSE){
+    cond.pow <- function(x) { # x = c(n2, c2)
+      F.z(x[2], delta.alt, x[1])
+    }
+    p <-  apply(cbind(n2, c2), 1, cond.pow)
+  } else {
+    cp <- function(x){
+      integrate(Vectorize(function(delta){
+        copo <-  F.z(x[2], delta, x[1]) * pi.1(delta, delta.alt, tau, x[3], n1)
+        q <-  copo
+        return(q)
+    }),
+    delta.mcr,
+    Inf)$value
+    }
+
+    p <- apply(cbind(n2, c2, z), 1, cp)
+  }
+
+  return(1 - p)
+}

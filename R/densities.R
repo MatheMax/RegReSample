@@ -26,7 +26,7 @@ F.z <- function(z, delta, n) {
 }
 
 # Integration parameters
-N <- 5 # Note that N-1 has to be a multiple of 4
+N <- 17 # Note that N-1 has to be a multiple of 4
 wei <- rep(c(32, 12, 32, 14), length.out = N - 1)
 wei <- c(7, wei[-length(wei)], 7)
 h <- 2 / 45 / (N - 1)

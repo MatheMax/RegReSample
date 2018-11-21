@@ -14,7 +14,7 @@ cp <- function(z1, c2, n2, cf, ce, delta) {
   z <- seq(cf, ce, length.out = length(n2))
   c <- splinefun(z, c2)
   n <- splinefun(z, n2)
-  p <- F(c(z1), delta, n(z1))
+  p <- F.z(c(z1), delta, n(z1))
   return(p)
 }
 
@@ -35,12 +35,12 @@ bcp <- function(z1, c2, n2, cf, ce, delta.mcr, delta.alt, tau) {
   z <- seq(cf, ce, length.out = length(n2))
   c <- splinefun(z, c2)
   n <- splinefun(z, n2)
-  p <- integrate(Vectorize(function(delta) {
-              F(c(z1), delta, n(z1)) * pi.1(delta, delta.alt, tau, z1, n1)
+  p <- integrate(Vectorize(function(del) {
+              F.z(c(z1), del, n(z1)) * pi.1(del, delta.alt, tau, z1, n1)
     #evtl kann man hier laufzeit gewinnen
-            },
+            }),
             delta.mcr,
-            1))
+            1)
   return(p$value)
 }
 
