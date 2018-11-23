@@ -6,11 +6,10 @@
 #' @param ce stopping for efficacy boundary
 #' @param c2 vector with c2-values
 #'
-toe <- function(cf, ce, c2, n1) {
-  p <- pnorm(-cf)
-  z <- seq(cf, ce, length.out = length(c2))
+toe <- function(n1, cf, ce, c2, f.z, F.z) {
+  p <- F.z(-cf, 0, n1)
+  z <- seq(cf, ce, length.out = N)
   int <- h *  (ce - cf) * sum(wei * F.z(c2, 0, n1) * f.z(z, 0, n1))
-  #int <- h *  (ce - cf) * sum(wei * pnorm(c2) * dnorm(z))
   p <- p - int
   return(p)
 }
@@ -27,10 +26,11 @@ toe <- function(cf, ce, c2, n1) {
 #' @param delta.mcr Minimal clinically relevant effect size
 #' @param weighted_alternative Should a weighted alternative be used?
 #'
-pow <- function(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr, delta.alt, tau) {
-  z <- seq(cf, ce, length.out = length(c2))
-  if(weighted.alternative == FALSE) {
-    fs <- pnorm(sqrt(n1) * delta.alt - cf)
+pow <- function(n1, cf, ce, n2, c2, weighted.alternative,
+                delta.mcr, delta.alt, d.1, f.z, F.z, pi.0, pi.1) {
+  z <- seq(cf, ce, length.out = N)
+  if(weighted.alternative == F) {
+    fs <- 1 - F.z(cf,delta.alt, n1)
     den <- sapply(z, function(z1) f.z(z1, delta.alt, n1)) # Compute density at nodes
     cond.pow <- function(x) {
       F.z(x[2], delta.alt, x[1])  # x = c(n2, c2)
@@ -39,46 +39,20 @@ pow <- function(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr, delta.alt, 
     int <- h * (ce - cf) * sum(wei * int)
     pow <- (fs - int)
   } else {
-    pow <- integrate(Vectorize(function(delta) {
-      fs <- pnorm(sqrt(n1) * delta - cf)
+    pow.point <- function(delta) {
+      fs <- 1 - F.z(cf, delta, n1)
       den <- sapply(z, function(z1) f.z(z1, delta, n1)) # Compute density at nodes
       cond.pow <- function(x) {
         F.z(x[2], delta, x[1]) # x = c(n2, c2)
       }
       int <- den * apply(cbind(n2, c2), 1, cond.pow)
       int <- h * (ce - cf) * sum(wei * int)
-      q <- (fs - int) * pi.0(delta, delta.alt, tau)
+      q <- (fs - int) * pi.0(delta)
       return(q)
-  }),
-  delta.mcr,
-  Inf)$value
+    }
+    pow <- h.2 * (3 * delta.alt - delta.mcr) * sum(wei.2 * sapply(d.1, pow.point))
   }
+
   return(pow)
 }
 
-
-#' Conditional Power restriction
-
-cond.pow.rest <- function(n1, cf, ce, n2, c2, delta.mcr, weighted.alternative, delta.alt, tau){
-  z <- seq(cf, ce, length.out = length(n2)) # Compute nodes
-  if(weighted.alternative == FALSE){
-    cond.pow <- function(x) { # x = c(n2, c2)
-      F.z(x[2], delta.alt, x[1])
-    }
-    p <-  apply(cbind(n2, c2), 1, cond.pow)
-  } else {
-    cp <- function(x){
-      integrate(Vectorize(function(delta){
-        copo <-  F.z(x[2], delta, x[1]) * pi.1(delta, delta.alt, tau, x[3], n1)
-        q <-  copo
-        return(q)
-    }),
-    delta.mcr,
-    Inf)$value
-    }
-
-    p <- apply(cbind(n2, c2, z), 1, cp)
-  }
-
-  return(1 - p)
-}

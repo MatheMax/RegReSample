@@ -9,11 +9,29 @@
 #'
 #' @export
 
-plot_design <- function(d) {
+plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
   library(dplyr)
   library(gridExtra)
   library(grid)
   library(ggplot2)
+
+  # Define distribution of z_1
+  if(distribution == "normal"){
+    f.z <- function(z, delta, n){
+      dnorm(z, mean = sqrt(n) * delta, sd = 1)  # Lebesgue density of Z_1
+    }
+    F.z <- function(z, delta, n) {
+      pnorm(z, mean = sqrt(n) * delta, sd = 1)  # Distribution function of Z_1
+    }
+  } else if(distribution == "t"){
+    f.z <- function(z, delta, n){
+      dt(z, df = n - 1, ncp = sqrt(n) * delta) # Lebesgue density of Z_1
+    }
+    F.z <- function(z, delta, n) {
+      pt(z, df = n - 1, ncp = sqrt(n) * delta)  # Distribution function of Z_1
+    }
+  }
+
 
   # First stage
   df <- data_frame(
@@ -134,13 +152,13 @@ plot_design <- function(d) {
       legend.position = "none"
     ) +
     expand_limits(y = c(floor(min(v51)), ceiling(max(v51)))) +
-    scale_y_continuous(breaks = seq(0, 1000, 20))
+    scale_y_continuous(breaks = seq(0, 1000, 10))
 
 
   # Conditional power
 
   plot.cp <- function(z){
-    pnorm(sqrt(d$n2(z)) * 0.3 - d$c2(z))
+    pnorm(sqrt(d$n2(z)) * delta.alt - d$c2(z))
   }
 
   v61 <- rep(0, length(z1))
@@ -152,7 +170,7 @@ plot_design <- function(d) {
     geom_line(aes(x = z1, y = v61, linetype = "solid"), size=0.3) +
     geom_line(aes(x = z2, y = v62, linetype = "solid"), size=0.3) +
     geom_line(aes(x = z3, y = v63, linetype = "solid"), size=0.3) +
-    ggplot2::labs(title = "Conditional power for delta = 0.3",
+    ggplot2::labs(title = "Conditional power",
                   x = expression(z[1]),
                   y = element_blank()) +
     ggplot2::theme_bw() +
