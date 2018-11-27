@@ -7,8 +7,14 @@
 #    http://shiny.rstudio.com/
 #
 
+if (!require("shiny"))
+  install.packages("shiny")
+if (!require("devtools"))
+  install.packages("devtools")
+if (!require("RegReSample"))
+  devtools::install_github("MatheMax/RegReSample")
+
 library(shiny)
-# install_github('MatheMax/RegReSample')
 library(RegReSample)
 
 # Define UI for application that draws a histogram
