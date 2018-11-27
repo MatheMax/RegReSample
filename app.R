@@ -89,7 +89,7 @@ ui <- fluidPage(
          sliderInput("tau",
                      "Standard deviation of prior distribution",
                      min = .05,
-                     max = .5,
+                     max = .3,
                      value = .01,
                      step = .01)
         ),

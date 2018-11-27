@@ -203,7 +203,7 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3,
       })
     } else if(power == "equal"){
       v62 <- sapply(z2, function(x){
-        integrate(Vectorize(function(delta){plot.cp(x, delta) * pi.0(delta, x)}),
+        integrate(Vectorize(function(delta){plot.cp(x, delta) * pi.0(delta)}),
                   delta.mcr,
                   Inf)$value
     })
