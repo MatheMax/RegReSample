@@ -1,4 +1,5 @@
-'f.z <- function(z, delta, n){
+'
+f.z <- function(z, delta, n){
   dnorm(z, mean = sqrt(n) * delta, sd = 1)  # Lebesgue density of Z_1
 }
 F.z <- function(z, delta, n) {
@@ -9,7 +10,8 @@ pi.0 <- function(delta, delta.alt, tau){
 }
 pi.1 <- function(delta, delta.alt, tau, z1, n1){
   dnorm(delta, mean = delta.alt, sd = tau)
-}'
+}
+'
 
 
 # Integration parameters

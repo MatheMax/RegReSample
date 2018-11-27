@@ -32,7 +32,7 @@ ecp <- function(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr, delta.alt,
     copo <- apply(cbind(n2, c2, z), 1, cp)
   }
   p <- h * sum(wei * w * copo)
-  return(1 - p)
+  return(10 * (1 - p))
 }
 
 
@@ -41,18 +41,17 @@ ecp <- function(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr, delta.alt,
 #'
 #'
 #' Approximates the L_1-norm of the derivative of n2 w.r.t. z1.
-dcp.l1 <- function(n1, c2, n2, cf, ce,
+dcp.l1 <- function(n1, cf, ce, n2, c2,
                    weighted.alternative,
                    delta.mcr,
                    delta.alt,
                    d.1,
-                   f.z,
                    F.z,
                    pi.1) {
   p <- cond.pow.rest(n1, cf, ce, n2, c2, weighted.alternative, delta.mcr,
                      delta.alt, d.1, F.z, pi.1)
-  dis <- (ce - cf) / N
-  p <- sum(abs(diff(p))) / (2 * dis)
+  #dis <- (ce - cf) / N
+  p <- 10 * sum(abs(diff(p))) #/ (2 * dis)
   return(p)
 }
 

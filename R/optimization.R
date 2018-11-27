@@ -27,8 +27,8 @@ score <- function(n1, cf, ce, n2, c2, lambda,
     p <- p  + lambda[2] * dn2.l1(cf, ce, n2)
   }
   if(lambda[3] != 0){
-    p <- p  + lambda[3] * dcp.l1(n1, c2, n2, cf, ce, weighted.alternative,
-                                 delta.mcr, delta.alt, d.1, f.z, F.z, pi.1)
+    p <- p  + lambda[3] * dcp.l1(n1, cf, ce, n2, c2, weighted.alternative,
+                                 delta.mcr, delta.alt, d.1, F.z, pi.1)
   }
 
   return(p)
@@ -69,7 +69,8 @@ opt_design <- function(alpha,
                 delta.alt = .3,
                 tau = .1,
                 n.max = Inf,
-                distribution = c("normal", "t")
+                distribution = c("normal", "t"),
+                n1 = NA
                 ) {
 
   # Build sequence of effect sizes in order to compute integrals
@@ -119,99 +120,165 @@ opt_design <- function(alpha,
   }
 
 
-  # Define start values and boundaries
-  start <- c(min(50, n.max - 1), 0, min(2, qnorm(1 - alpha)),
-             seq(min(50, n.max - 1), min(10, n.max - 1), length.out = N),
-             seq(2, 0, length.out = N))
-  low <- c(0, -1, qnorm(1 - alpha),
-           rep(0, N), rep(-1, N))
-  up <- c(n.max, 4, 4,
-          rep(n.max, N), rep(4, N))
-
-  # Define errors
-  if(pow(up[1], low[2], up[3], up[4 : (N+3)], low[(N+4) : length(start)],
-         weighted.alternative, delta.mcr, delta.alt, d.1, f.z, F.z,
-         pi.0) < 1 - beta){
-    return("The maximal sample size is too low for the desired power!")
-    break
-  }
-
   if(lambda[1] < 0 | lambda[2] < 0 | lambda[3] < 0){
-    return("lambda must not be negative!")
-    break
+    stop("lambda must not be negative!")
   }
 
   # Optimize
-  optimum <- nloptr::nloptr(
-    x0          = start,
-    eval_f      = function(y) {score(y[1], y[2], y[3],
-                                                 y[4 : (N+3)],
-                                                 y[(N+4) : length(start)],
-                                                 lambda,
-                                                 weighted.alternative,
-                                                 delta.mcr,
-                                                 delta.alt,
-                                                 d.1,
-                                                 d.2,
-                                                 f.z,
-                                                 F.z,
-                                                 pi.0,
-                                                 pi.1)
-                },
-    eval_g_ineq = function(y) { return( c(
-                  y[2] - y[3] + 0.1,
-                  diff(y[(N+4) : length(start)]),
-                  toe(y[1], y[2], y[3], y[(N+4) : length(start)], f.z, F.z) - alpha,
-                  1 - beta - pow(y[1], y[2], y[3],
-                                 y[4 : (N+3)],
-                                 y[(N+4) : length(start)],
-                                 weighted.alternative,
-                                 delta.mcr,
-                                 delta.alt,
-                                 d.1,
-                                 f.z,
-                                 F.z,
-                                 pi.0),
-                  rep(1 - beta.2, N) - cond.pow.rest(y[1], y[2], y[3],
+  if(is.na(n1)){
+    # Define start values and boundaries
+    start <- c(min(50, n.max - 1), 0, min(2, qnorm(1 - alpha)),
+               seq(min(50, n.max - 1), min(10, n.max - 1), length.out = N),
+               seq(2, 0, length.out = N))
+    low <- c(0, -1, min(2, qnorm(1 - alpha)),
+             rep(0, N), rep(-1, N))
+    up <- c(n.max, 4, 4,
+            rep(n.max, N), rep(4, N))
+
+    # Define errors
+    if(pow(up[1], low[2], up[3], up[4 : (N+3)], low[(N+4) : length(start)],
+           weighted.alternative, delta.mcr, delta.alt, d.1, f.z, F.z,
+           pi.0) < 1 - beta){
+      stop("The maximal sample size is too low for the desired power!")
+    }
+    optimum <- nloptr::nloptr(
+      x0          = start,
+      eval_f      = function(y) {score(y[1], y[2], y[3],
                                                    y[4 : (N+3)],
                                                    y[(N+4) : length(start)],
+                                                   lambda,
                                                    weighted.alternative,
                                                    delta.mcr,
                                                    delta.alt,
                                                    d.1,
+                                                   d.2,
+                                                   f.z,
                                                    F.z,
+                                                   pi.0,
                                                    pi.1)
-    ) )
-    },
-    lb = low,
-    ub = up,
-    opts = list(
-      algorithm = "NLOPT_LN_COBYLA",
-      xtol_rel = 0.00001,
-      maxeval = 99999,
-      maxtime = 16200
+                  },
+      eval_g_ineq = function(y) { return( c(
+                    y[2] - y[3] + 0.1,
+                    diff(y[(N+4) : length(start)]),
+                    toe(y[1], y[2], y[3], y[(N+4) : length(start)], f.z, F.z) - alpha,
+                    1 - beta - pow(y[1], y[2], y[3],
+                                   y[4 : (N+3)],
+                                   y[(N+4) : length(start)],
+                                   weighted.alternative,
+                                   delta.mcr,
+                                   delta.alt,
+                                   d.1,
+                                   f.z,
+                                   F.z,
+                                   pi.0),
+                    rep(1 - beta.2, N) - cond.pow.rest(y[1], y[2], y[3],
+                                                     y[4 : (N+3)],
+                                                     y[(N+4) : length(start)],
+                                                     weighted.alternative,
+                                                     delta.mcr,
+                                                     delta.alt,
+                                                     d.1,
+                                                     F.z,
+                                                     pi.1)
+      ) )
+      },
+      lb = low,
+      ub = up,
+      opts = list(
+        algorithm = "NLOPT_LN_COBYLA",
+        xtol_rel = 0.00001,
+        maxeval = 99999,
+        maxtime = 16200
+      )
     )
-  )
+    n1 <- optimum$solution[1]
+    cf <- optimum$solution[2]
+    ce <- optimum$solution[3]
+    n2 <- optimum$solution[4 : (N + 3)]
+    c2 <- optimum$solution[(N + 4) : length(start)]
+  } else{
+    # Define start values and boundaries
+    start <- c(0, min(2, qnorm(1 - alpha)),
+               seq(min(50, n.max - 1), min(10, n.max - 1), length.out = N),
+               seq(2, 0, length.out = N))
+    low <- c(-1, qnorm(1 - alpha), rep(0, N), rep(-1, N))
+    up <- c(4, 4, rep(n.max, N), rep(4, N))
 
-  n1 <- optimum$solution[1]
-  cf <- optimum$solution[2]
-  ce <- optimum$solution[3]
-  n2 <- optimum$solution[4 : (N + 3)]
-  c2 <- optimum$solution[(N + 4) : length(start)]
-  x <- seq(cf, ce, length.out = N)
-
-  y <- optimum$solution
-
-  if(toe(y[1], y[2], y[3], y[(N+4) : length(start)], f.z, F.z) - alpha > .005){
-    return("The chosen parameters do not allow to protect the type one error rate!")
-    break
+    # Define errors
+    if(pow(n1, low[1], up[2], up[3 : (N+2)], low[(N+3) : length(start)],
+           weighted.alternative, delta.mcr, delta.alt, d.1, f.z, F.z,
+           pi.0) < 1 - beta){
+      stop("The maximal sample size is too low for the desired power!")
+    }
+    optimum <- nloptr::nloptr(
+      x0          = start,
+      eval_f      = function(y) {score(n1, y[1], y[2],
+                                       y[3 : (N+2)],
+                                       y[(N+3) : length(start)],
+                                       lambda,
+                                       weighted.alternative,
+                                       delta.mcr,
+                                       delta.alt,
+                                       d.1,
+                                       d.2,
+                                       f.z,
+                                       F.z,
+                                       pi.0,
+                                       pi.1)
+      },
+      eval_g_ineq = function(y) { return( c(
+        y[1] - y[2] + 0.1,
+        diff(y[(N+3) : length(start)]),
+        toe(n1, y[1], y[2], y[(N+3) : length(start)], f.z, F.z) - alpha,
+        1 - beta - pow(n1, y[1], y[2],
+                       y[3 : (N+2)],
+                       y[(N+3) : length(start)],
+                       weighted.alternative,
+                       delta.mcr,
+                       delta.alt,
+                       d.1,
+                       f.z,
+                       F.z,
+                       pi.0),
+        rep(1 - beta.2, N) - cond.pow.rest(n1, y[1], y[2],
+                                           y[3 : (N+2)],
+                                           y[(N+3) : length(start)],
+                                           weighted.alternative,
+                                           delta.mcr,
+                                           delta.alt,
+                                           d.1,
+                                           F.z,
+                                           pi.1)
+      ) )
+      },
+      lb = low,
+      ub = up,
+      opts = list(
+        algorithm = "NLOPT_LN_COBYLA",
+        xtol_rel = 0.00001,
+        maxeval = 99999,
+        maxtime = 16200
+      )
+    )
+    n1 <- n1
+    cf <- optimum$solution[1]
+    ce <- optimum$solution[2]
+    n2 <- optimum$solution[3 : (N + 2)]
+    c2 <- optimum$solution[(N + 3) : length(start)]
   }
 
-  if(1 - beta - pow(y[1], y[2], y[3], y[4 : (N+3)], y[(N+4) : length(start)],
+  x <- seq(cf, ce, length.out = N)
+
+  y <- c(n1, cf, ce, n2, c2)
+
+  if(toe(y[1], y[2], y[3], y[(N+4) : length(y)], f.z, F.z) - alpha > .005){
+    stop("The chosen parameters do not allow to protect the type one error rate!")
+  }
+
+  if(1 - beta - pow(y[1], y[2], y[3], y[4 : (N+3)], y[(N+4) : length(y)],
                     weighted.alternative, delta.mcr, delta.alt,
                     d.1, f.z, F.z, pi.0) > .01){
-    return("The chosen parameters do not allow to achieve the desired power!")
-    break
+    stop("The chosen parameters do not allow to achieve the desired power!")
   }
 
 

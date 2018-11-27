@@ -41,8 +41,8 @@ ess <- function(n1, cf, ce, n2, weighted.alternative, delta.alt,
 #' @param n2 Vector of n2-values
 #'
 dn2.l1 <- function(cf, ce, n2){
-  dis <- (ce - cf) / N
-  p <- sum(abs(diff(n2))) / (2 * dis)
+  #dis <- (ce - cf) / N
+  p <- mean(abs(diff(n2))) #/ (2 * dis)
   return(p)
 }
 

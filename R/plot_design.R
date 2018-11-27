@@ -9,10 +9,14 @@
 #'
 #' @export
 
-plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
+plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3,
+                        prior = c("point", "normal"),
+                        power = c("predictive", "equal"),
+                        delta.mcr = .1,
+                        beta = .2,
+                        beta.2 = .2,
+                        tau = .1) {
   library(dplyr)
-  library(gridExtra)
-  library(grid)
   library(ggplot2)
 
   # Define distribution of z_1
@@ -32,15 +36,40 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
     }
   }
 
+  # Define prior
+  if(prior == "point"){
+    weighted.alternative = F
+    pi.0 <- function(delta){
+      dnorm(delta, mean = delta.alt, sd = tau)
+    }
+  } else if (prior == "normal"){
+    weighted.alternative = T
+    pi.0 <- function(delta){
+      dnorm(delta, mean = delta.alt, sd = tau)
+    }
+  }
+
+  # Define power
+  if(power == "equal"){
+    pi.1 <- function(delta, z1){
+      dnorm(delta, mean = delta.alt, sd = tau)
+    }
+  } else if(power == "predictive"){
+    pi.1 <- function(delta, z1){
+      t <- 1 / (d$n1 + 1 / tau^2)
+      dnorm(delta, mean = t * (delta.alt / tau^2 + sqrt(d$n1) * z1), sd = sqrt(t))
+    }
+  }
+
 
   # First stage
-  df <- data_frame(
+  df <- dplyr::data_frame(
     ` ` = c("n[1]", "c[f]", "c[e]"),
     `Value` = c(2*ceiling(d$n1), round(d$cf, 2), round(d$ce, 2))
   )
 
   table <- gridExtra::tableGrob(df, rows = NULL,
-                                theme=ttheme_minimal(base_size=11, parse=TRUE))
+                                theme=gridExtra::ttheme_minimal(base_size=11, parse=TRUE))
   title <- grid::textGrob("First stage", gp = grid::gpar(fontsize=12))
   padding <- grid::unit(0.8, "line")
   table <- gtable::gtable_add_rows(
@@ -105,9 +134,9 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
     expand_limits(y = c(floor(min(v22)), ceiling(max(v22))))
 
   # Power
-  theta <- seq(0, .5, 0.01)
+  theta <- seq(0, max(.5, delta.alt+.05), 0.05)
   pow.plot <- function(th) {
-    pnorm(sqrt(d$n1) * th - d$cf) -
+    1 - F.z(d$cf, th, d$n1) -
       integrate(Vectorize(function(z){
         F.z(d$c2(z), th, d$n2(z)) * f.z(z, th, d$n1)
       }),
@@ -118,6 +147,8 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
   out4 <- data.frame(cbind(theta, v41))
   bild4 <-   ggplot2::ggplot(out4, ggplot2::aes(x = theta)) +
     ggplot2::geom_line(ggplot2::aes(y = v41, linetype = "solid"), size=0.3) +
+    ggplot2::geom_hline(yintercept = 1-beta, colour = "grey", size=0.3) +
+    ggplot2::geom_vline(xintercept = delta.alt, colour = "grey", size=0.3) +
     ggplot2::labs(title = "Global power for point alternative",
                   x = expression(delta),
                   y = element_blank()) +
@@ -142,6 +173,7 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
   out5 <- data.frame(cbind(theta, v51))
   bild5 <-   ggplot2::ggplot(out5, ggplot2::aes(x = theta)) +
     ggplot2::geom_line(ggplot2::aes(y = v51, linetype = "solid"), size=0.3) +
+    ggplot2::geom_vline(xintercept = delta.alt, colour = "grey", size=0.3) +
     ggplot2::labs(title = "Expected sample size",
                   x = expression(delta),
                   y = element_blank()) +
@@ -157,19 +189,36 @@ plot_design <- function(d, distribution = c("normal", "t"), delta.alt = .3) {
 
   # Conditional power
 
-  plot.cp <- function(z){
-    pnorm(sqrt(d$n2(z)) * delta.alt - d$c2(z))
+  plot.cp <- function(z, delta){
+    pnorm(sqrt(d$n2(z)) * delta - d$c2(z))
   }
 
   v61 <- rep(0, length(z1))
-  v62 <- sapply(z2, function(x){plot.cp(x)})
+  if(prior == "normal"){
+    if(power == "predictive"){
+      v62 <- sapply(z2, function(x){
+        integrate(Vectorize(function(delta){plot.cp(x, delta) * pi.1(delta, x)}),
+                  delta.mcr,
+                  Inf)$value
+      })
+    } else if(power == "equal"){
+      v62 <- sapply(z2, function(x){
+        integrate(Vectorize(function(delta){plot.cp(x, delta) * pi.0(delta, x)}),
+                  delta.mcr,
+                  Inf)$value
+    })
+    }
+  } else{
+    v62 <- sapply(z2, function(x){plot.cp(x, delta.alt)})
+  }
   v63 <- rep(1, length(z3))
 
   out6 <- suppressWarnings(data.frame(cbind(z1, z2, z3, v61, v62, v63)))
   bild6 <- ggplot(out6) +
-    geom_line(aes(x = z1, y = v61, linetype = "solid"), size=0.3) +
-    geom_line(aes(x = z2, y = v62, linetype = "solid"), size=0.3) +
-    geom_line(aes(x = z3, y = v63, linetype = "solid"), size=0.3) +
+    ggplot2::geom_hline(yintercept = 1-beta.2, colour = "grey", size=0.3) +
+    ggplot2::geom_line(aes(x = z1, y = v61, linetype = "solid"), size=0.3) +
+    ggplot2::geom_line(aes(x = z2, y = v62, linetype = "solid"), size=0.3) +
+    ggplot2::geom_line(aes(x = z3, y = v63, linetype = "solid"), size=0.3) +
     ggplot2::labs(title = "Conditional power",
                   x = expression(z[1]),
                   y = element_blank()) +
